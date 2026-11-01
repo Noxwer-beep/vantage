@@ -197,7 +197,7 @@ same scan against the same target lines up entry for entry.
 **Long scans** → the `vuln` phase with `--script vuln` is the slow one. Use
 `--no-vuln` for a fast sweep, or `--ports` to narrow the surface.
 
-**"refused: ... is a public address"** → by design. If you genuinely have
+**"refused: ... is a public address"** → by design. If you do have
 authorisation, pass `--allow-public`, and keep the written approval.
 
 **"refused: ... is outside scope ..."** → the target does not fall inside the scope
