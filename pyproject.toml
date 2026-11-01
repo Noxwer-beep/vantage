@@ -11,11 +11,10 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Maximilian Jatzkowski" }]
 keywords = ["security", "nmap", "pentest", "reconnaissance", "vulnerability"]
-dependencies = ["jinja2>=3.1"]
+dependencies = ["jinja2>=3.1", "rich>=13"]
 
 [project.optional-dependencies]
 ui = ["flask>=2.3"]
-cli = ["rich>=13"]
 
 [project.scripts]
 vantage = "vantage.cli:main"

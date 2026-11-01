@@ -74,7 +74,7 @@ sudo apt install nmap openssl
 # optional, enable the web + TLS phases fully
 sudo apt install nikto whatweb
 # Python side
-pip install rich flask jinja2
+pip install rich jinja2 flask
 ```
 
 Run it straight from the checkout:
