@@ -2,9 +2,11 @@
 
 **Authorized network reconnaissance and vulnerability triage — from a terminal or a browser.**
 
-Vantage scans a network you control, works out what is actually exposed, checks it
-against nmap's vulnerability scripts plus a curated exposure table, and produces a
-report that separates what it **confirmed** from what it merely **suspects**.
+I built this because I kept scanning my own lab with nmap and then doing the triage in
+my head. Vantage wraps the scan in a scope you have to state up front, and does the
+triage: what is exposed, what the evidence actually proves, and what to do about it.
+The report keeps **confirmed** apart from **possible**, because that distinction is the
+whole job.
 
 ![vantage show — 33 findings on the practice lab](docs/img/cli-scan.png)
 
