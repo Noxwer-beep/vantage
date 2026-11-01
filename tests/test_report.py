@@ -82,6 +82,29 @@ class TestRender(unittest.TestCase):
         md = reporting.render_markdown(FIXTURE)
         self.assertLess(md.index("### Critical"), md.index("### Medium"))
 
+    def test_port_product_and_version_render(self):
+        """The port table reads product/version/extrainfo, not a `banner` key.
+
+        Stored scans and older report data do not carry `banner`, so rendering it
+        only from that key produced a column of dashes for every scanned host.
+        """
+        md = reporting.render_markdown(FIXTURE)
+        self.assertIn("Windows 7", md)
+        html = reporting.render_html(FIXTURE)
+        self.assertIn("Windows 7", html)
+
+    def test_port_to_dict_carries_the_banner(self):
+        from vantage.models import Port
+
+        data = Port(number=22, service="ssh", product="OpenSSH", version="4.7p1",
+                    extrainfo="Debian").to_dict()
+        self.assertEqual(data["banner"], "OpenSSH 4.7p1 Debian")
+
+    def test_port_banner_is_empty_when_unknown(self):
+        from vantage.models import Port
+
+        self.assertEqual(Port(number=23, service="telnet").banner, "")
+
     def test_html_is_self_contained(self):
         html = reporting.render_html(FIXTURE)
         self.assertIn("<!DOCTYPE html>", html)

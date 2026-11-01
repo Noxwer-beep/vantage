@@ -46,7 +46,11 @@ class Port:
         return " ".join(b for b in bits if b).strip()
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        # `banner` is a derived property, and the report templates read it from the
+        # dict — without this every row in "product / version" renders as a dash.
+        data["banner"] = self.banner
+        return data
 
 
 @dataclass

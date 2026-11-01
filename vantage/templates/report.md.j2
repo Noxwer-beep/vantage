@@ -36,7 +36,7 @@ No hosts with open TCP ports were found.
 | Port | Service | Product / version |
 |---|---|---|
 {% for p in h.open_ports -%}
-| {{ p.number }}/{{ p.protocol }} | {{ p.service or 'unknown' }} | {{ p.banner or p.label }} |
+| {{ p.number }}/{{ p.protocol }} | {{ p.service or 'unknown' }} | {{ ([p.product, p.version, p.extrainfo] | select | join(' ')) or p.banner or p.label or '—' }} |
 {% endfor %}
 {%- else -%}
 No open ports recorded.

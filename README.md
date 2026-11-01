@@ -6,6 +6,8 @@ Vantage scans a network you control, works out what is actually exposed, checks 
 against nmap's vulnerability scripts plus a curated exposure table, and produces a
 report that separates what it **confirmed** from what it merely **suspects**.
 
+![vantage show — 33 findings on the practice lab](docs/img/cli-scan.png)
+
 ```
 $ vantage scan 192.168.1.0/24 --scope homelab.json --authorized
 
@@ -106,6 +108,7 @@ vantage show <scan-id> --full
 vantage findings --severity high
 vantage report <scan-id> --format md
 vantage audit --tail 30
+vantage cat                                                # the cat
 ```
 
 ## Strategies
@@ -259,6 +262,33 @@ analyzer applies.
 
 Override with `VANTAGE_DATA_DIR=/some/path`.
 
+## On a real target
+
+The practice lab has a Metasploitable 2 box on an isolated subnet. A `standard`
+scan of it — authorised, scoped to that single address, eight minutes — produced 33
+findings:
+
+| Severity | Count | Examples |
+|---|---|---|
+| **high** | 3 | Telnet reachable · VNC console reachable · Jenkins on 8009 |
+| **medium** | 15 | FTP, MySQL, PostgreSQL, X11, NetBIOS exposed · Apache 2.2.8 · PHP 5.2.4 · Samba 3.x |
+| **low** | 10 | unencrypted HTTP · RPC portmapper |
+| info | 5 | service banners |
+
+15 of the 33 are `confirmed` (a port answered, or a service named itself); the
+version-based ones are `possible`, because a banner is the remote service's own claim
+and backported fixes make banners lie.
+
+Risk **87/100, grade critical** — which is the correct read for a box that is
+supposed to be that broken.
+
+![the generated report](docs/img/report.png)
+
+Everything above is a port that answered and a service that identified itself. The
+confidence column keeps the guesses separate — see [docs/FINDINGS.md](docs/FINDINGS.md).
+
+![vantage strategies](docs/img/cli-strategies.png)
+
 ## Legal
 
 Vantage is built for **authorized** testing: your own lab, your employer's network
@@ -286,7 +316,7 @@ checkbox. Read [docs/LEGAL.md](docs/LEGAL.md) before pointing it at anything.
 python3 -m unittest discover -s tests -t .
 ```
 
-129 tests, stdlib only, no network required. They cover the authorisation gate,
+132 tests, stdlib only, no network required. They cover the authorisation gate,
 scope parsing, nmap XML handling, the finding rules, report rendering and storage.
 
 ## Licence

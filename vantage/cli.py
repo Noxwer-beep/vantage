@@ -32,7 +32,9 @@ from .engine import Engine, PHASE_LABELS
 from .live import LiveView
 from .models import summarise
 
-console = Console()
+# Piped output must be stable: a table that reflows at 80 columns wraps mid-row
+_WIDTH = None if sys.stdout.isatty() else int(os.environ.get("COLUMNS", "100"))
+console = Console(width=_WIDTH)
 err_console = Console(stderr=True)
 
 SEV_STYLE = {
@@ -463,6 +465,49 @@ def cmd_scope(args: argparse.Namespace) -> int:
     return 1
 
 
+CAT = [
+    r"        /\                 /\ ",
+    r"       /  \_______________/  \ ",
+    r"      |    ||         ||    | ",
+    r"      |          v           | ",
+    r"       \___________________/  ",
+]
+
+
+def cmd_cat(args: argparse.Namespace) -> int:
+    """The cat, wearing the same face as everywhere else in the lab."""
+    art = Text()
+    for index, line in enumerate(CAT):
+        if index:
+            art.append("\n")
+        if "v" in line and "|" in line:
+            head, _, tail = line.partition("v")
+            art.append(head)
+            art.append("v", style="#c9f24d")
+            art.append(tail)
+        else:
+            art.append(line)
+
+    side = Text()
+    side.append("\n\n")
+    side.append("VANTAGE", style="bold")
+    side.append(f"  {__version__}\n", style="dim")
+    for line in (
+        "authorized recon and vulnerability triage",
+        "it will not scan anything you have not claimed",
+        "and it will not call a guess a confirmed finding",
+    ):
+        side.append(line + "\n", style="dim")
+
+    grid = Table.grid(padding=(0, 3))
+    grid.add_row(art, side)
+    console.print()
+    console.print(grid)
+    console.print("[dim]  the cat appears in every tool here — press c on the portfolio[/]")
+    console.print()
+    return 0
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     header("environment check")
     import shutil
@@ -751,6 +796,9 @@ def build_parser() -> argparse.ArgumentParser:
     d = sub.add_parser("doctor", help="check the toolchain")
     d.set_defaults(func=cmd_doctor)
 
+    cat = sub.add_parser("cat", help="the cat")
+    cat.set_defaults(func=cmd_cat)
+
     a = sub.add_parser("audit", help="show the authorisation audit log")
     a.add_argument("--tail", type=int, default=20)
     a.set_defaults(func=cmd_audit)
@@ -775,8 +823,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv:
-        header()
-        console.print("[dim]no command given — here is what it can do:[/]\n")
+        cmd_cat(argparse.Namespace())
+        console.print("[dim]here is what it can do:[/]\n")
         parser.print_help()
         return 0
     args = parser.parse_args(argv)

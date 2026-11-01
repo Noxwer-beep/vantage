@@ -180,7 +180,7 @@
         <tr>
           <td class="mono">{{ p.number }}/{{ p.protocol }}</td>
           <td>{{ p.service or 'unknown' }}</td>
-          <td>{{ p.banner or '—' }}</td>
+          <td>{{ ([p.product, p.version, p.extrainfo] | select | join(' ')) or p.banner or '—' }}</td>
         </tr>
       {% endfor %}
       </tbody>
