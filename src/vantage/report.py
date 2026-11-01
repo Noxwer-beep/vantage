@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+
 
 from . import __version__, config
 from .models import summarise
@@ -29,7 +29,14 @@ SEVERITY_COLORS = {
 _SAFE_SEVERITIES = {"critical", "high", "medium", "low", "info"}
 
 
-def _env() -> Environment:
+def _env():
+    """Build the Jinja environment on first use.
+
+    Importing jinja2 at module level cost ~60 ms on every CLI command, including
+    `vantage doctor`, which never renders a template.
+    """
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATES)),
         autoescape=select_autoescape(enabled_extensions=("html", "xml", "j2")),
