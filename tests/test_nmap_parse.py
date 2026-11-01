@@ -106,6 +106,7 @@ class TestParseEdgeCases(unittest.TestCase):
 
 
 class TestBinaryDetection(unittest.TestCase):
+    @unittest.skipUnless(nmap.have_binary("nmap"), "nmap is not installed here")
     def test_have_binary_finds_nmap(self):
         self.assertTrue(nmap.have_binary("nmap"))
 

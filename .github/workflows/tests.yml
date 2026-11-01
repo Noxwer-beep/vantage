@@ -17,7 +17,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # The test suite is stdlib-only: no nmap, no network, no dependencies.
+      - name: Install
+        run: pip install -e .
+
+      # The test suite needs no nmap and no network: everything that would touch
+      # the wire is replaced by a fixture.
       - name: Run tests
         run: python -m unittest discover -s tests -t . -v
 
