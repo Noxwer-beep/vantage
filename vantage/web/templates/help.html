@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Vantage · help{% endblock %}
+
+{% block body %}
+<section class="scan-head">
+  <div>
+    <p class="eyebrow">reference</p>
+    <h1 class="target">How Vantage works</h1>
+    <p class="sub">Same engine behind the CLI and this interface.</p>
+  </div>
+</section>
+
+<div class="docs">
+  <section>
+    <h2>Command line</h2>
+<pre class="code">vantage scan 192.168.1.0/24 --scope homelab.json --authorized
+vantage scan 10.0.0.5 --profile deep --open-report
+vantage ui                        # this page
+vantage history                   # past scans
+vantage show &lt;scan-id&gt; --full    # finding detail
+vantage findings --severity high  # cross-scan query
+vantage report &lt;scan-id&gt;          # re-render to HTML/MD/JSON
+vantage doctor                    # toolchain check
+vantage audit --tail 30           # authorisation log</pre>
+
+    <h2>Profiles</h2>
+    <table class="data compact">
+      <thead><tr><th>Profile</th><th>Ports</th><th>Phases</th><th>Typical time</th></tr></thead>
+      <tbody>
+        <tr><td><b>quick</b></td><td>top 100 TCP</td><td>ports, versions</td><td>seconds</td></tr>
+        <tr><td><b>standard</b></td><td>top 1000 TCP</td><td>+ NSE vuln, web, TLS</td><td>2–10 min /24</td></tr>
+        <tr><td><b>deep</b></td><td>all 65535 TCP</td><td>+ full version intensity</td><td>10–60+ min</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Severity versus confidence</h2>
+    <p>
+      These are two separate axes, and keeping them apart is the point.
+      <b>Severity</b> is how bad it would be if true. <b>Confidence</b> is how sure
+      this scan is that it is true.
+    </p>
+    <ul class="bullets">
+      <li><span class="conf c-confirmed">confirmed</span> a check returned a positive result
+        (an NSE script said VULNERABLE, a TLS handshake succeeded on TLS 1.0, a port is open).</li>
+      <li><span class="conf c-likely">likely</span> a strong signal that needs one manual step to confirm.</li>
+      <li><span class="conf c-possible">possible</span> a heuristic hit — nikto output, an end-of-life
+        banner, a version comparison. Verify before acting.</li>
+      <li><span class="conf c-informational">informational</span> context, not a weakness.</li>
+    </ul>
+
+    <h2>What it will not do</h2>
+    <ul class="bullets">
+      <li>Run without an explicit authorisation statement.</li>
+      <li>Leave a declared scope — a target outside the scope file is refused before any packet is sent.</li>
+      <li>Use credentials, attempt logins, or run exploitation tools.</li>
+      <li>Pass <code>--script-args unsafe=1</code> to nmap; several NSE scripts can crash fragile services.</li>
+      <li>Claim "vulnerable" from a version banner alone — those are reported as <em>possible</em>.</li>
+    </ul>
+
+    <h2>Exit codes</h2>
+    <table class="data compact">
+      <tbody>
+        <tr><td class="mono">0</td><td>scan completed</td></tr>
+        <tr><td class="mono">1</td><td>error during the run</td></tr>
+        <tr><td class="mono">2</td><td>refused — authorisation or scope</td></tr>
+        <tr><td class="mono">3</td><td>a required tool is missing</td></tr>
+        <tr><td class="mono">4</td><td><code>--fail-on</code> threshold met (CI gate)</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Where things are stored</h2>
+    <p class="mono small dim">~/.local/share/vantage/</p>
+    <ul class="bullets">
+      <li><code>vantage.db</code> — scan history and findings (SQLite)</li>
+      <li><code>reports/&lt;scan-id&gt;/report.{html,md,json}</code></li>
+      <li><code>logs/audit.jsonl</code> — every authorisation decision, including refusals</li>
+    </ul>
+
+    <h2>Scope files</h2>
+    <p>A JSON, TOML or plain-text list of the networks an engagement covers:</p>
+<pre class="code">vantage scope new --name homelab --targets 192.168.1.0/24 10.0.0.0/25 -o homelab.json
+vantage scope check homelab.json</pre>
+    <p class="small dim">
+      Plain text works too — one network per line, <code>#</code> for comments.
+      The scope file's networks are hashed into every report as a fingerprint.
+    </p>
+  </section>
+
+  <aside class="legal">
+    <h2>Legal</h2>
+    <p>
+      Port scanning is legal in most places when you have permission and illegal when you
+      do not. In Germany that is <b>§202a–c StGB</b> (Ausspähen und Abfangen von Daten);
+      elsewhere the equivalents are the CFAA (US) and the Computer Misuse Act (UK).
+    </p>
+    <p>
+      A port scan is not "harmless traffic". It touches systems you do not administer.
+      Keep written authorisation on file — the scope, the dates, the permitted techniques —
+      and stay inside it.
+    </p>
+    <p class="small dim">
+      Authorization statements, scope fingerprints and target lists are written to the
+      local audit log for exactly this reason.
+    </p>
+  </aside>
+</div>
+{% endblock %}

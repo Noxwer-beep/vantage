@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Vantage · diff{% endblock %}
+
+{% macro flist(items) %}
+  {% if items %}
+  <div class="diff-list">
+    {% for f in items %}
+    <article class="finding sev-{{ f.severity }}">
+      <div class="f-head">
+        <span class="sev-tag sev-{{ f.severity }}">{{ f.severity }}</span>
+        <span class="conf">{{ f.confidence }}</span>
+        <span class="loc mono">{{ f.location }}</span>
+      </div>
+      <p class="f-title">{{ f.title }}</p>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty small">None.</p>
+  {% endif %}
+{% endmacro %}
+
+{% block body %}
+<section class="scan-head">
+  <div>
+    <p class="eyebrow">comparison</p>
+    <h1 class="target">{{ d.compare_target or d.compare_id }}</h1>
+    <p class="sub">
+      <span class="mono">{{ d.base_id }}</span> →
+      <span class="mono">{{ d.compare_id }}</span>
+      · risk
+      <span class="delta {{ 'up' if d.score_delta > 0 else ('down' if d.score_delta < 0 else '') }}">
+        {{ d.base_score }} → {{ d.compare_score }} ({{ '%+d' % d.score_delta }})
+      </span>
+    </p>
+  </div>
+  <div class="head-actions">
+    <a class="btn ghost" href="{{ url_for('scan_detail', scan_id=d.base_id) }}">Base scan</a>
+    <a class="btn ghost" href="{{ url_for('scan_detail', scan_id=d.compare_id) }}">Compare scan</a>
+    <a class="btn ghost" href="{{ url_for('api_diff', base=d.base_id, compare=d.compare_id) }}">JSON</a>
+  </div>
+</section>
+
+{% if not d.same_target %}
+<p class="notice warn" style="margin-top:1rem">
+  These scans have different targets ({{ d.base_target }} vs {{ d.compare_target }}).
+  A diff is only meaningful for the same scope.
+</p>
+{% endif %}
+
+<div class="live-stats">
+  <span><b>{{ d.new|length }}</b> new</span>
+  <span><b>{{ d.resolved|length }}</b> resolved</span>
+  <span><b>{{ d.persisting|length }}</b> still present</span>
+  <span><b>{{ d.changed|length }}</b> changed</span>
+  <span><b>{{ d.new_ports|length }}</b> new ports</span>
+  <span><b>{{ d.closed_ports|length }}</b> closed ports</span>
+</div>
+
+{% if not d.noisy %}
+  <p class="empty" style="margin-top:1.5rem">
+    No changes. Both scans agree on every finding and every open port.
+  </p>
+{% else %}
+  <div class="diff-cols">
+    <section>
+      <h2 class="card-title">New <span class="count">{{ d.new|length }}</span></h2>
+      {{ flist(d.new) }}
+    </section>
+    <section>
+      <h2 class="card-title">Resolved <span class="count">{{ d.resolved|length }}</span></h2>
+      {{ flist(d.resolved) }}
+    </section>
+  </div>
+
+  {% if d.changed %}
+  <h2 class="card-title" style="margin-top:2rem">Changed</h2>
+  <table class="data">
+    <thead><tr><th>Location</th><th>Finding</th><th>Before</th><th>After</th></tr></thead>
+    <tbody>
+      {% for c in d.changed %}
+      <tr>
+        <td class="mono">{{ c.location }}</td>
+        <td>{{ c.title }}</td>
+        <td class="mono small">{{ c.severity_before }}/{{ c.confidence_before }}</td>
+        <td class="mono small">{{ c.severity_after }}/{{ c.confidence_after }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if d.new_ports or d.closed_ports %}
+  <h2 class="card-title" style="margin-top:2rem">Port changes</h2>
+  <div class="asset-stream">
+    {% for p in d.new_ports %}<span class="asset mono" style="border-color:rgba(255,77,90,.4)">+ {{ p.host }}:{{ p.port }}</span>{% endfor %}
+    {% for p in d.closed_ports %}<span class="asset mono" style="border-color:rgba(110,231,135,.35)">− {{ p.host }}:{{ p.port }}</span>{% endfor %}
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}

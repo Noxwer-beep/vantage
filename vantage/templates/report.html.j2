@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Vantage {{ tool_version }}">
+<title>Vantage report — {{ target }}</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --panel: #12161b;
+    --panel-2: #171c22;
+    --line: #232a32;
+    --ink: #e8ecef;
+    --ink-dim: #9aa6b2;
+    --muted: #6b7785;
+    --accent: #57e0c9;
+    --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: var(--mono); font-size: 0.86em; }
+
+  header.top {
+    border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 32px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .brand span { font-family: var(--mono); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-dim); }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .sub { color: var(--ink-dim); font-size: 14px; margin: 0; }
+
+  .meta {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px; background: var(--line); border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden; margin-bottom: 28px;
+  }
+  @media (max-width: 720px) { .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .meta div { background: var(--panel); padding: 14px 16px; }
+  .meta dt { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+  .meta dd { margin: 0; font-size: 13px; word-break: break-word; }
+
+  .score-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: stretch; margin-bottom: 28px; }
+  .score {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 22px; min-width: 180px; flex: 0 0 auto;
+  }
+  .score .n { font-family: var(--mono); font-size: 40px; line-height: 1; font-weight: 500; }
+  .score .l { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+  .counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; flex: 1 1 420px; }
+  .count {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 12px; text-align: center;
+  }
+  .count .n { font-family: var(--mono); font-size: 22px; line-height: 1; }
+  .count .l { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+
+  h2 { font-size: 13px; font-family: var(--mono); letter-spacing: .14em; text-transform: uppercase;
+       color: var(--ink-dim); margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 16px; margin: 24px 0 12px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px; }
+  th { text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+       text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); font-weight: 500; }
+  td { padding: 9px 10px; border-bottom: 1px solid rgba(35,42,50,.6); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(87,224,201,.03); }
+
+  .finding {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 12px; border-left: 3px solid var(--sev, var(--muted));
+  }
+  .finding .head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+  .finding .title { font-size: 15px; font-weight: 600; margin: 0; flex: 1 1 300px; }
+  .pill {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap;
+  }
+  .loc { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); margin: 0 0 10px; }
+  .evidence {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 10px 12px; font-family: var(--mono); font-size: 11.5px; line-height: 1.5;
+    color: #c7d0d9; white-space: pre-wrap; word-break: break-word; margin: 0 0 12px;
+    max-height: 220px; overflow: auto;
+  }
+  .field { margin: 0 0 8px; font-size: 13.5px; }
+  .field b { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; }
+  .refs { font-size: 12px; color: var(--ink-dim); }
+  .refs a { margin-right: 10px; }
+
+  .note { background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+          border-radius: 8px; padding: 14px 18px; font-size: 13.5px; color: var(--ink-dim); }
+  .note ul { margin: 8px 0 0; padding-left: 18px; }
+  .warn { border-left-color: #f5c451; }
+  .err { border-left-color: #ff4d5a; }
+
+  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--line);
+           font-size: 12px; color: var(--muted); }
+  .empty { color: var(--muted); font-style: italic; padding: 12px 0; }
+
+  @media print {
+    body { background: #fff; color: #111; }
+    .page { max-width: none; padding: 0; }
+    .finding, .meta div, .score, .count, .note, .evidence { background: #fff; border-color: #ccc; }
+    .evidence { color: #222; }
+    h2 { color: #444; }
+    a { color: #0a5; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="top">
+    <div class="brand"><span class="dot"></span><span>Vantage · security assessment</span></div>
+    <h1>{{ target }}</h1>
+    <p class="sub">Profile {{ profile }} · {{ summary.total }} finding(s) across {{ hosts_open | length }} host(s) with open ports · {{ duration_s | human_duration }}</p>
+  </header>
+
+  <dl class="meta">
+    <div><dt>Scan ID</dt><dd class="mono">{{ scan_id }}</dd></div>
+    <div><dt>Status</dt><dd>{{ status }}</dd></div>
+    <div><dt>Scope</dt><dd>{{ scope.name }}{% if scope.networks %} · {{ scope.networks | join(', ') }}{% endif %}</dd></div>
+    <div><dt>Operator</dt><dd>{{ guard.operator }}</dd></div>
+    <div><dt>Started</dt><dd>{{ started }}</dd></div>
+    <div><dt>Finished</dt><dd>{{ finished or '—' }}</dd></div>
+    <div><dt>Scope fingerprint</dt><dd class="mono">{{ scope.fingerprint }}</dd></div>
+    <div><dt>Toolchain</dt><dd class="mono">{{ tool_versions.nmap and 'nmap ' ~ tool_versions.nmap }}{% if tool_versions.nikto == 'present' %} · nikto{% endif %}{% if tool_versions.whatweb == 'present' %} · whatweb{% endif %}</dd></div>
+  </dl>
+
+  <div class="score-row">
+    <div class="score" style="border-color: {{ summary.grade | sev_color }}40">
+      <div class="n" style="color: {{ summary.grade | sev_color }}">{{ summary.score }}</div>
+      <div class="l">risk score / 100 · {{ summary.grade }}</div>
+    </div>
+    <div class="counts">
+      {% for sev in severity_order %}
+      <div class="count">
+        <div class="n" style="color: {{ sev | sev_color }}">{{ counts.get(sev, 0) }}</div>
+        <div class="l">{{ sev }}</div>
+      </div>
+      {% endfor %}
+      <div class="count">
+        <div class="n">{{ summary.confirmed }}</div>
+        <div class="l">confirmed</div>
+      </div>
+    </div>
+  </div>
+
+  {% if warnings or errors %}
+  <div class="note warn" style="margin-bottom: 20px">
+    <b>Run notices</b>
+    <ul>
+      {% for w in warnings %}<li>{{ w }}</li>{% endfor %}
+      {% for e in errors %}<li style="color:#ff8f8f">{{ e }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <h2>Hosts and open ports</h2>
+  {% if hosts_open %}
+  {% for h in hosts_open %}
+    <h3 class="mono" style="font-size:13px; color: var(--ink-dim)">
+      {{ h.address }}{% if h.hostname %} · {{ h.hostname }}{% endif %}
+      {% if h.os_matches %}<span style="color:var(--muted)"> · {{ h.os_matches[0].name }} ({{ h.os_matches[0].accuracy }}%)</span>{% endif %}
+    </h3>
+    {% if h.open_ports %}
+    <table>
+      <thead><tr><th>Port</th><th>Service</th><th>Product / version</th></tr></thead>
+      <tbody>
+      {% for p in h.open_ports %}
+        <tr>
+          <td class="mono">{{ p.number }}/{{ p.protocol }}</td>
+          <td>{{ p.service or 'unknown' }}</td>
+          <td>{{ p.banner or '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="empty">No open ports recorded.</p>{% endif %}
+  {% endfor %}
+  {% else %}
+  <p class="empty">No hosts with open TCP ports were found.</p>
+  {% endif %}
+
+  {% if tls %}
+  <h2>TLS endpoints</h2>
+  <table>
+    <thead><tr><th>Endpoint</th><th>Protocol</th><th>Subject</th><th>Expires</th><th>Trust</th></tr></thead>
+    <tbody>
+    {% for t in tls %}
+      <tr>
+        <td class="mono">{{ t.host }}:{{ t.port }}</td>
+        <td>{{ t.protocol or '—' }}</td>
+        <td style="font-size:12px">{{ t.subject or '—' }}</td>
+        <td>{{ t.not_after or '—' }}{% if t.days_left is not none %} <span style="color:var(--muted)">({{ t.days_left }}d)</span>{% endif %}</td>
+        <td>{% if t.self_signed %}self-signed{% elif t.verify_ok %}verified{% else %}unverified{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <h2>Findings</h2>
+  {% set ns = namespace(any=false) %}
+  {% for sev in severity_order %}
+    {% set items = findings_grouped.get(sev, []) %}
+    {% if items %}
+      {% set ns.any = true %}
+      <h3 style="color: {{ sev | sev_color }}">{{ sev | capitalize }} <span style="color:var(--muted); font-weight:400">— {{ items | length }}</span></h3>
+      {% for f in items %}
+      <article class="finding" style="--sev: {{ f.severity | sev_color }}">
+        <div class="head">
+          <p class="title">{{ f.title }}</p>
+          <span class="pill" style="color: {{ f.severity | sev_color }}">{{ f.severity }}</span>
+          <span class="pill" style="color: {{ 'var(--accent)' if f.confidence == 'confirmed' else 'var(--ink-dim)' }}">{{ f.confidence }}</span>
+        </div>
+        <p class="loc">{{ f.location }}{% if f.service %} · {{ f.service }}{% endif %}{% if f.cvss %} · CVSS {{ f.cvss }}{% endif %} · {{ f.source }}</p>
+        {% if f.evidence %}<pre class="evidence">{{ f.evidence }}</pre>{% endif %}
+        {% if f.detail %}<div class="field"><b>Why it matters</b>{{ f.detail }}</div>{% endif %}
+        {% if f.remediation %}<div class="field"><b>Remediation</b>{{ f.remediation }}</div>{% endif %}
+        {% if f.references or f.cves %}
+        <div class="refs"><b>Refs</b>
+          {% for c in f.cves %}<a href="https://nvd.nist.gov/vuln/detail/{{ c }}" rel="noreferrer">{{ c }}</a>{% endfor %}
+          {% for r in f.references %}<a href="{{ r }}" rel="noreferrer">{{ r.split('//')[-1][:52] }}</a>{% endfor %}
+        </div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+  {% if not ns.any %}
+    <p class="empty">No findings were produced. That means nothing was detected — not that the target is secure.</p>
+  {% endif %}
+
+  <h2>Coverage and limits</h2>
+  <div class="note">
+    <ul>
+    {% for c in coverage %}<li>{{ c }}</li>{% endfor %}
+    <li>Severity is potential impact; confidence is how sure this scan is. A
+        <code>possible</code> finding is a lead to verify, not a verdict.</li>
+    <li>Version-based findings come from banners, which can be backported or
+        spoofed. Confirm before acting.</li>
+    </ul>
+  </div>
+
+  <footer>
+    <p>Generated by Vantage {{ tool_version }} on {{ generated }} · scan <span class="mono">{{ scan_id }}</span></p>
+    <p>Produced for an authorised engagement. Authorisation recorded as:
+       “{{ guard.statement }}” by {{ guard.operator }}. Distribution outside the
+       agreed scope needs the system owner's consent.</p>
+  </footer>
+
+</div>
+</body>
+</html>

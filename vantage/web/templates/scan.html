@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% block title %}Vantage · {{ state.target }}{% endblock %}
+
+{% block body %}
+<section class="scan-head">
+  <div>
+    <p class="eyebrow" id="scan-id" data-id="{{ state.scan_id }}">{{ state.scan_id }}</p>
+    <h1 class="target">{{ state.target }}</h1>
+    <p class="sub">
+      profile <b>{{ state.profile }}</b>
+      · started <span class="mono">{{ state.started }}</span>
+      · <span id="status-pill" class="pill status-{{ state.status }}">{{ state.status }}</span>
+    </p>
+  </div>
+  <div class="head-actions">
+    <a class="btn ghost" href="{{ url_for('report_view', scan_id=state.scan_id) }}" id="report-link">Open report</a>
+    <a class="btn ghost" href="{{ url_for('report_download', scan_id=state.scan_id, fmt='md') }}">Markdown</a>
+    <a class="btn ghost" href="{{ url_for('report_download', scan_id=state.scan_id, fmt='json') }}">JSON</a>
+  </div>
+</section>
+
+<div class="progress-wrap">
+  <div class="progress"><div class="progress-bar" id="bar" style="width: {{ state.progress }}%"></div></div>
+  <div class="progress-meta">
+    <span id="phase">running…</span>
+    <span id="pct" class="mono">{{ state.progress }}%</span>
+  </div>
+  <div class="live-stats">
+    <span><b id="stat-hosts">{{ state.hosts }}</b> host(s)</span>
+    <span><b id="stat-ports">{{ state.open_ports }}</b> open port(s)</span>
+    <span><b id="stat-findings">{{ state.findings|length }}</b> finding(s)</span>
+  </div>
+</div>
+
+<div class="cols wide">
+  <section>
+    <h2 class="card-title">Live findings <span class="count" id="fcount">{{ state.findings|length }}</span></h2>
+    <div id="findings" class="findings-list">
+      {% for f in state.findings %}
+      <article class="finding sev-{{ f.severity }}" data-key="{{ f.key }}">
+        <div class="f-head">
+          <span class="sev-tag sev-{{ f.severity }}">{{ f.severity }}</span>
+          <span class="conf">{{ f.confidence }}</span>
+          <span class="loc mono">{{ f.location }}</span>
+        </div>
+        <p class="f-title">{{ f.title }}</p>
+      </article>
+      {% endfor %}
+    </div>
+    <p class="empty" id="fempty" {% if state.findings %}style="display:none"{% endif %}>
+      Nothing reported yet. Findings appear here as the analysis phase runs.
+    </p>
+  </section>
+
+  <aside>
+    <h2 class="card-title">Phases</h2>
+    <ul class="phase-list" id="phase-list">
+      {% for p in state.phases %}
+      <li class="phase-row phase-{{ p.status }}">
+        <span class="mark"></span>
+        <span class="lbl">{{ p.label }}</span>
+        <span class="note">{{ p.note }}{% if p.duration_s %} · {{ p.duration_s }}s{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <h2 class="card-title tight">Assets <span class="count" id="asset-count">{{ state.assets|length }}</span></h2>
+    <div class="asset-stream" id="assets">
+      {% for a in state.assets[-12:] %}
+      <span class="asset mono">{{ a.host }}:{{ a.port }}</span>
+      {% endfor %}
+    </div>
+
+    <h2 class="card-title tight">Console</h2>
+    <pre class="console" id="console">{% for line in state.logs %}{{ line }}
+{% endfor %}</pre>
+
+    <div id="notices" class="notices">
+      {% for w in state.warnings %}<p class="notice warn">{{ w }}</p>{% endfor %}
+      {% for e in state.errors %}<p class="notice err">{{ e }}</p>{% endfor %}
+    </div>
+
+    <div id="summary" class="summary-card" {% if state.status == 'running' %}style="display:none"{% endif %}>
+      <h2 class="card-title tight">Result</h2>
+      <div class="score-line">
+        <span class="score-num" id="score">{{ state.summary.score if state.summary else '—' }}</span>
+        <span class="score-grade" id="grade">{{ state.summary.grade if state.summary else '' }}</span>
+      </div>
+      <div class="counts" id="counts">
+        {% if state.summary and state.summary.counts %}
+          {% for sev in severity_order %}
+          <div class="count"><span class="n">{{ state.summary.counts.get(sev, 0) }}</span><span class="l">{{ sev }}</span></div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <p class="small dim" id="hosts-line">
+        {% if state.status != 'running' %}{{ state.hosts }} host(s) · {{ state.open_ports }} open port(s){% endif %}
+      </p>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function () {
+  const id = document.getElementById('scan-id').dataset.id;
+  const bar = document.getElementById('bar');
+  const phase = document.getElementById('phase');
+  const pct = document.getElementById('pct');
+  const consoleEl = document.getElementById('console');
+  const findingsEl = document.getElementById('findings');
+  const fempty = document.getElementById('fempty');
+  const fcount = document.getElementById('fcount');
+  const pill = document.getElementById('status-pill');
+  const summary = document.getElementById('summary');
+  const notices = document.getElementById('notices');
+
+  const labels = {
+    discover: 'host discovery', ports: 'port scan', services: 'service detection',
+    vuln: 'vulnerability scripts', web: 'web surface', tls: 'TLS inspection',
+    analyse: 'analysis'
+  };
+
+  let rendered = new Set();
+  // Seed from whatever the server already rendered, so the first poll does not
+  // duplicate every finding on the page.
+  document.querySelectorAll('#findings .finding').forEach(function (el) {
+    if (el.dataset.key) rendered.add(el.dataset.key);
+  });
+  fcount.textContent = rendered.size;
+
+  function sevClass(s) { return ['critical','high','medium','low','info'].includes(s) ? s : 'info'; }
+
+  function addFinding(f) {
+    if (rendered.has(f.key)) return;
+    rendered.add(f.key);
+    const el = document.createElement('article');
+    el.className = 'finding sev-' + sevClass(f.severity);
+    el.innerHTML =
+      '<div class="f-head">' +
+        '<span class="sev-tag sev-' + sevClass(f.severity) + '">' + f.severity + '</span>' +
+        '<span class="conf">' + f.confidence + '</span>' +
+        '<span class="loc mono"></span>' +
+      '</div><p class="f-title"></p>';
+    el.querySelector('.loc').textContent = f.location || '';
+    el.querySelector('.f-title').textContent = f.title || '';
+    findingsEl.appendChild(el);
+    fempty.style.display = 'none';
+    fcount.textContent = rendered.size;
+    document.getElementById('stat-findings').textContent = rendered.size;
+  }
+
+  const MARKS = { running: '▸', done: '✓', skipped: '–', failed: '✗' };
+
+  function renderPhases(phases) {
+    const list = document.getElementById('phase-list');
+    list.innerHTML = '';
+    phases.forEach(function (p) {
+      const li = document.createElement('li');
+      li.className = 'phase-row phase-' + (p.status || 'running');
+      const mark = document.createElement('span');
+      mark.className = 'mark';
+      mark.textContent = MARKS[p.status] || '·';
+      const lbl = document.createElement('span');
+      lbl.className = 'lbl';
+      lbl.textContent = p.label || p.key;
+      const note = document.createElement('span');
+      note.className = 'note';
+      note.textContent = (p.note || '') + (p.duration_s ? ' · ' + p.duration_s + 's' : '');
+      li.append(mark, lbl, note);
+      list.appendChild(li);
+    });
+  }
+
+  let assetCount = 0;
+  function renderAssets(assets, total) {
+    const box = document.getElementById('assets');
+    document.getElementById('asset-count').textContent = total || assets.length;
+    // Only rebuild when something new arrives, so the stream does not flicker.
+    if (assets.length === assetCount) return;
+    assetCount = assets.length;
+    box.innerHTML = '';
+    assets.slice(-12).forEach(function (a) {
+      const span = document.createElement('span');
+      span.className = 'asset mono';
+      span.textContent = a.host + ':' + a.port;
+      box.appendChild(span);
+    });
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch('/api/scan/' + id, { cache: 'no-store' });
+      if (!r.ok) return;
+      const s = await r.json();
+      bar.style.width = (s.progress || 0) + '%';
+      pct.textContent = (s.progress || 0) + '%';
+      phase.textContent = labels[s.phase] || s.phase || '';
+      pill.textContent = s.status;
+      pill.className = 'pill status-' + s.status;
+
+      document.getElementById('stat-hosts').textContent = s.hosts ?? 0;
+      document.getElementById('stat-ports').textContent = s.open_ports ?? 0;
+      renderPhases(s.phases || []);
+      renderAssets(s.assets || [], s.asset_total || 0);
+
+      consoleEl.textContent = (s.logs || []).join('\n');
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+
+      (s.findings || []).forEach(addFinding);
+
+      if (s.status !== 'running') {
+        summary.style.display = '';
+        if (s.summary && s.summary.counts) {
+          document.getElementById('score').textContent = s.summary.score;
+          const g = document.getElementById('grade');
+          g.textContent = s.summary.grade;
+          g.className = 'score-grade sev-' + s.summary.grade;
+          const counts = document.getElementById('counts');
+          counts.innerHTML = '';
+          ['critical','high','medium','low','info'].forEach(function (sev) {
+            const n = s.summary.counts[sev] || 0;
+            const d = document.createElement('div');
+            d.className = 'count';
+            d.innerHTML = '<span class="n">' + n + '</span><span class="l">' + sev + '</span>';
+            counts.appendChild(d);
+          });
+        }
+        document.getElementById('hosts-line').textContent =
+          s.hosts + ' host(s) · ' + s.open_ports + ' open port(s)';
+        notices.innerHTML = '';
+        (s.warnings || []).forEach(function (w) {
+          const p = document.createElement('p'); p.className = 'notice warn'; p.textContent = w;
+          notices.appendChild(p);
+        });
+        (s.errors || []).forEach(function (e) {
+          const p = document.createElement('p'); p.className = 'notice err'; p.textContent = e;
+          notices.appendChild(p);
+        });
+        return; // stop polling
+      }
+      setTimeout(poll, 1200);
+    } catch (e) {
+      setTimeout(poll, 3000);
+    }
+  }
+  setTimeout(poll, 600);
+})();
+</script>
+{% endblock %}

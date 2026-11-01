@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Vantage · history{% endblock %}
+
+{% block body %}
+<section class="scan-head">
+  <div>
+    <p class="eyebrow">storage</p>
+    <h1 class="target">Scan history</h1>
+    <p class="sub">{{ stats.scans }} scan(s) · {{ stats.findings }} finding(s) stored locally</p>
+  </div>
+  <div class="head-actions"><a class="btn primary" href="{{ url_for('index') }}">New scan</a></div>
+</section>
+
+{% if scans %}
+<table class="data">
+  <thead>
+    <tr><th>Scan</th><th>Target</th><th>Profile</th><th>Started</th><th>Risk</th><th>Findings</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    {% for s in scans %}
+    <tr>
+      <td><a class="mono" href="{{ url_for('scan_detail', scan_id=s.id) }}">{{ s.id }}</a></td>
+      <td class="mono">{{ s.target }}</td>
+      <td>{{ s.profile }}</td>
+      <td class="mono small">{{ s.started }}</td>
+      <td><span class="risk sev-{{ s.grade }}">{{ s.score }}</span></td>
+      <td class="counts-cell">
+        {% for sev in severity_order %}{% set n = (s.counts or {}).get(sev, 0) %}
+          {% if n %}<span class="chip sev-{{ sev }}">{{ n }} {{ sev[0]|upper }}</span>{% endif %}
+        {% endfor %}
+        {% if not s.counts %}<span class="dim">—</span>{% endif %}
+      </td>
+      <td><span class="pill status-{{ s.status }}">{{ s.status }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No scans yet. <a href="{{ url_for('index') }}">Start one.</a></p>
+{% endif %}
+{% endblock %}

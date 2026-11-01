@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Convenience wrapper so `./vantage` works from the checkout.
+exec "$(dirname "$0")/vantage.py" "$@"

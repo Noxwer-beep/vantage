@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Vantage{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230b0d10'/><path d='M8 10l8 13 8-13' stroke='%2357e0c9' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="{{ url_for('index') }}">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="word">VANTAGE</span>
+    </a>
+    <nav class="nav">
+      <a href="{{ url_for('index') }}">scan</a>
+      <a href="{{ url_for('history') }}">history</a>
+      <a href="{{ url_for('help_page') }}">help</a>
+    </nav>
+    <span class="tag">local · v{{ version }}</span>
+  </header>
+
+  <main>
+    {% block body %}{% endblock %}
+  </main>
+
+  <footer class="foot">
+    <p>Vantage {{ version }} — authorized network reconnaissance &amp; vulnerability triage.</p>
+    <p class="dim">Use only on systems you own or have written permission to test. Every scan is recorded in the local audit log.</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,125 @@
+{
+  "_comment": "End-of-life / known-weak version table. Matched against the nmap version banner (product + version). Deliberately narrow: every entry must be defensible from the banner alone. These are reported as 'possible' confidence — a banner is a claim by the remote service, not proof. Severity is capped at medium because EOL software is a risk factor, not a confirmed vulnerability.",
+  "rules": [
+    {
+      "product": "Apache httpd",
+      "match": "apache",
+      "max_safe": [2, 4, 58],
+      "severity": "medium",
+      "title": "Apache httpd out of date",
+      "detail": "The banner reports a version below 2.4.58, which predates several fixed security releases in the 2.4 branch.",
+      "remediation": "Upgrade to the current 2.4.x release, or move to a supported distribution package stream and confirm the vendor backports security fixes.",
+      "refs": ["https://httpd.apache.org/security/vulnerabilities_24.html"]
+    },
+    {
+      "product": "nginx",
+      "match": "nginx",
+      "max_safe": [1, 24, 0],
+      "severity": "medium",
+      "title": "nginx out of date",
+      "detail": "The banner reports a version below 1.24, which is outside the current stable/mainline support window.",
+      "remediation": "Upgrade to the current stable release and review the security advisories between the two versions.",
+      "refs": ["https://nginx.org/en/security_advisories.html"]
+    },
+    {
+      "product": "OpenSSH",
+      "match": "openssh",
+      "max_safe": [8, 0, 0],
+      "severity": "medium",
+      "title": "OpenSSH out of date",
+      "detail": "The banner reports OpenSSH below 8.0, which is outside support and predates hardening defaults such as disabled ssh-rsa signatures in newer releases.",
+      "remediation": "Upgrade the SSH daemon, or move to a distribution release that backports fixes. Re-check the negotiated algorithms afterwards.",
+      "refs": ["https://www.openssh.com/security.html"]
+    },
+    {
+      "product": "OpenSSL",
+      "match": "openssl",
+      "max_safe": [1, 1, 1],
+      "severity": "high",
+      "title": "OpenSSL 1.0.x/1.1.0 — obsolete branch",
+      "detail": "OpenSSL 1.1.0 and older are end-of-life and no longer receive security fixes. Heartbleed (CVE-2014-0160) affects 1.0.1 through 1.0.1f.",
+      "remediation": "Upgrade to OpenSSL 3.x (or a vendor-supported 1.1.1 build) and restart dependent services.",
+      "refs": ["https://www.openssl.org/policies/releasestrat.html", "https://nvd.nist.gov/vuln/detail/CVE-2014-0160"]
+    },
+    {
+      "product": "PHP",
+      "match": "php",
+      "max_safe": [8, 1, 0],
+      "severity": "medium",
+      "title": "PHP out of date",
+      "detail": "The banner reports PHP below 8.1, a branch that no longer receives security updates.",
+      "remediation": "Upgrade to a supported PHP branch (8.2 or newer at time of writing) and re-test the application.",
+      "refs": ["https://www.php.net/supported-versions.php"]
+    },
+    {
+      "product": "Microsoft IIS",
+      "match": "microsoft-iis",
+      "max_safe": [10, 0, 0],
+      "severity": "medium",
+      "title": "Legacy Microsoft IIS version",
+      "detail": "The banner suggests an IIS version that belongs to an operating system no longer in support.",
+      "remediation": "Migrate the site to a supported Windows Server release. IIS version is tied to the OS, so this is an OS lifecycle issue.",
+      "refs": ["https://learn.microsoft.com/en-us/lifecycle/"]
+    },
+    {
+      "product": "vsftpd",
+      "match": "vsftpd",
+      "max_safe": [3, 0, 0],
+      "severity": "low",
+      "title": "vsftpd out of date",
+      "detail": "The banner reports vsftpd below 3.0, missing fixes from later releases.",
+      "remediation": "Upgrade vsftpd, or retire FTP entirely in favour of SFTP.",
+      "refs": []
+    },
+    {
+      "product": "ProFTPD",
+      "match": "proftpd",
+      "max_safe": [1, 3, 7],
+      "severity": "low",
+      "title": "ProFTPD out of date",
+      "detail": "The banner reports ProFTPD below 1.3.7, which predates a number of security releases.",
+      "remediation": "Upgrade ProFTPD and review its advisory history for the versions skipped.",
+      "refs": ["http://www.proftpd.org/docs/RELEASE_NOTES"]
+    },
+    {
+      "product": "Samba",
+      "match": "samba",
+      "max_safe": [4, 15, 0],
+      "severity": "medium",
+      "title": "Samba out of date",
+      "detail": "The banner reports Samba below 4.15. Older Samba releases have had remotely exploitable flaws, including SambaCry (CVE-2017-7494).",
+      "remediation": "Upgrade Samba to a current release, disable SMBv1, and restrict shares to required subnets.",
+      "refs": ["https://www.samba.org/samba/history/security.html"]
+    },
+    {
+      "product": "Exim",
+      "match": "exim",
+      "max_safe": [4, 95, 0],
+      "severity": "medium",
+      "title": "Exim out of date",
+      "detail": "The banner reports Exim below 4.95, a period with multiple critical remote code execution fixes.",
+      "remediation": "Upgrade Exim to a current release and review local configuration for exposed ACLs.",
+      "refs": ["https://exim.org/static/doc/security/"]
+    },
+    {
+      "product": "Postfix",
+      "match": "postfix",
+      "max_safe": [3, 6, 0],
+      "severity": "low",
+      "title": "Postfix out of date",
+      "detail": "The banner reports Postfix below 3.6.",
+      "remediation": "Upgrade Postfix via the distribution package stream.",
+      "refs": []
+    },
+    {
+      "product": "UnrealIRCd",
+      "match": "unrealircd",
+      "max_safe": [5, 0, 0],
+      "severity": "high",
+      "title": "UnrealIRCd on a version with a backdoor history",
+      "detail": "Versions in the 3.2.8.1 line were distributed with a backdoor (CVE-2010-2075). Any pre-5 release warrants manual verification of the binary.",
+      "remediation": "Rebuild or upgrade to a current release from official sources, and verify the package signature.",
+      "refs": ["https://nvd.nist.gov/vuln/detail/CVE-2010-2075"]
+    }
+  ]
+}

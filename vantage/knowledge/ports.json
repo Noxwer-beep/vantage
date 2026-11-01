@@ -1,0 +1,240 @@
+{
+  "_comment": "Exposure knowledge base. Keyed by nmap service name; fall back key 'port:NNNN'. Severity reflects the risk of the service being reachable by an unauthorised network position, not a claim that it is exploitable.",
+  "services": {
+    "telnet": {
+      "severity": "high",
+      "title": "Telnet reachable",
+      "detail": "Telnet carries credentials and session data in cleartext. Anyone able to observe the path can read the login exchange.",
+      "remediation": "Disable the telnet daemon and use SSH. If a device only speaks telnet, isolate it in a management VLAN reachable solely from a jump host.",
+      "refs": ["https://www.cisa.gov/news-events/alerts/2013/05/14/risks-default-passwords-and-clear-text-protocols"]
+    },
+    "ftp": {
+      "severity": "medium",
+      "title": "FTP service reachable",
+      "detail": "FTP authenticates and transfers data in cleartext, so credentials are exposed to passive observers. Anonymous access is also common on older deployments.",
+      "remediation": "Replace with SFTP/FTPS. If legacy FTP must stay, restrict source addresses and confirm anonymous login is disabled.",
+      "refs": ["https://www.rfc-editor.org/rfc/rfc2577"]
+    },
+    "microsoft-ds": {
+      "severity": "medium",
+      "title": "SMB file sharing reachable",
+      "detail": "SMB exposes file shares, authentication and (historically) a large attack surface. Reachability from an untrusted segment is the precondition for most lateral-movement paths.",
+      "remediation": "Block TCP 445/139 at segment boundaries, disable SMBv1, require signing, and confirm guest access is off.",
+      "refs": ["https://learn.microsoft.com/en-us/windows-server/storage/file-server/troubleshoot/detect-enable-and-disable-smbv1-v2-v3"]
+    },
+    "netbios-ssn": {
+      "severity": "medium",
+      "title": "NetBIOS session service reachable",
+      "detail": "Legacy NetBIOS exposes host and workgroup information and is rarely needed on modern networks.",
+      "remediation": "Disable NetBIOS over TCP/IP where it is not required, and filter TCP 139 at the boundary.",
+      "refs": []
+    },
+    "ms-wbt-server": {
+      "severity": "medium",
+      "title": "Remote Desktop reachable",
+      "detail": "Exposed RDP is a frequent entry point for credential-stuffing and pre-auth vulnerabilities. Exposure to the internet or to untrusted internal segments increases risk materially.",
+      "remediation": "Front RDP with a VPN or an RDP gateway, enforce Network Level Authentication and account lockout, and restrict source addresses.",
+      "refs": ["https://www.cisa.gov/news-events/alerts/2019/08/12/microsoft-remote-desktop-services-remote-code-execution-vulnerability"]
+    },
+    "vnc": {
+      "severity": "high",
+      "title": "VNC remote console reachable",
+      "detail": "VNC commonly ships with weak or absent authentication and offers full interactive desktop control once connected.",
+      "remediation": "Tunnel VNC over SSH/VPN rather than exposing it, set a strong password, and bind it to localhost where possible.",
+      "refs": []
+    },
+    "ms-sql-s": {
+      "severity": "medium",
+      "title": "Microsoft SQL Server reachable",
+      "detail": "Database ports exposed beyond the application tier widen the attack surface and expose authentication to brute force.",
+      "remediation": "Bind the database to the application subnet only, disable the sa account, and enable login auditing.",
+      "refs": []
+    },
+    "mysql": {
+      "severity": "medium",
+      "title": "MySQL reachable",
+      "detail": "A database port reachable from an untrusted segment allows credential attacks and, in misconfigured cases, unauthenticated access.",
+      "remediation": "Restrict the bind address and firewall rules to application hosts; verify no account is reachable from '%'.",
+      "refs": []
+    },
+    "postgresql": {
+      "severity": "medium",
+      "title": "PostgreSQL reachable",
+      "detail": "Exposed PostgreSQL invites credential attacks and, with loose pg_hba.conf rules, trusted-network access.",
+      "remediation": "Restrict listen_addresses and pg_hba.conf to application hosts, and require scram-sha-256 authentication.",
+      "refs": []
+    },
+    "mongodb": {
+      "severity": "high",
+      "title": "MongoDB reachable",
+      "detail": "MongoDB historically shipped without authentication bound to all interfaces; even now, an exposed port often means an unauthenticated database.",
+      "remediation": "Enable authorization, bind to localhost or a private interface, and restrict access at the firewall. Confirm --auth is set.",
+      "refs": ["https://www.mongodb.com/docs/manual/administration/security-checklist/"]
+    },
+    "redis": {
+      "severity": "high",
+      "title": "Redis reachable",
+      "detail": "Redis has no authentication by default and supports commands that write files or load modules, which turns unauthenticated reachability into code execution in many setups.",
+      "remediation": "Bind to 127.0.0.1 or a private interface, set requirepass/ACLs, and disable or rename CONFIG, MODULE and DEBUG.",
+      "refs": ["https://redis.io/docs/management/security/"]
+    },
+    "memcache": {
+      "severity": "medium",
+      "title": "Memcached reachable",
+      "detail": "Memcached offers no authentication and can be abused for cache poisoning or as a reflection/amplification source.",
+      "remediation": "Bind to localhost/private interface, disable UDP, and firewall the port to application hosts.",
+      "refs": []
+    },
+    "elasticsearch": {
+      "severity": "high",
+      "title": "Elasticsearch reachable",
+      "detail": "Elasticsearch clusters are frequently found without authentication; an open API exposes every indexed document, including credentials and personal data.",
+      "remediation": "Enable the security features (xpack.security or OpenSearch security), bind to a private interface, and require TLS plus authentication.",
+      "refs": ["https://www.elastic.co/guide/en/elasticsearch/reference/current/security-minimal-setup.html"]
+    },
+    "http": {
+      "severity": "low",
+      "title": "Unencrypted HTTP service",
+      "detail": "Traffic to this service, including any credentials or session cookies, can be read or modified in transit.",
+      "remediation": "Redirect HTTP to HTTPS with HSTS once a certificate is in place; keep a plaintext listener only for the redirect.",
+      "refs": []
+    },
+    "ldap": {
+      "severity": "medium",
+      "title": "LDAP reachable",
+      "detail": "Plain LDAP transmits directory queries and simple-bind credentials in cleartext, and directory data aids attacker reconnaissance.",
+      "remediation": "Use LDAPS/StartTLS, restrict access to domain controllers from client subnets, and disable anonymous binds.",
+      "refs": []
+    },
+    "snmp": {
+      "severity": "medium",
+      "title": "SNMP reachable",
+      "detail": "SNMPv1/v2c use community strings sent in cleartext, and 'public'/'private' are still common. Read access leaks full device inventory and configuration detail.",
+      "remediation": "Move to SNMPv3 with authPriv, change default community strings, and permit polling only from the monitoring host.",
+      "refs": []
+    },
+    "tftp": {
+      "severity": "medium",
+      "title": "TFTP reachable",
+      "detail": "TFTP has no authentication and no integrity checking; it is used to push firmware and configuration to network devices.",
+      "remediation": "Restrict TFTP to the provisioning VLAN and a single source host, or replace it with a signed transfer mechanism.",
+      "refs": []
+    },
+    "nfs": {
+      "severity": "medium",
+      "title": "NFS export reachable",
+      "detail": "NFS export lists are often readable, and exports without root_squash can allow privilege escalation from a client.",
+      "remediation": "Restrict exports by host, set root_squash and no_subtree_check, and firewall port 2049 to known clients.",
+      "refs": []
+    },
+    "rpcbind": {
+      "severity": "low",
+      "title": "RPC portmapper reachable",
+      "detail": "Portmapper enumerates registered RPC services, simplifying reconnaissance of NFS and related subsystems.",
+      "remediation": "Firewall port 111 to clients that genuinely need it, and prefer NFSv4 which needs no portmapper.",
+      "refs": []
+    },
+    "docker": {
+      "severity": "critical",
+      "title": "Docker API reachable",
+      "detail": "An unauthenticated Docker API grants container creation with host mounts, which is equivalent to root on the host.",
+      "remediation": "Never expose the Docker daemon socket over TCP without mutual TLS; use a local socket or an authorising proxy.",
+      "refs": ["https://docs.docker.com/engine/security/protect-access/"]
+    },
+    "kubernetes": {
+      "severity": "high",
+      "title": "Kubernetes API reachable",
+      "detail": "The API server is the control plane. Anonymous access, weak RBAC or exposed kubelets frequently lead to cluster takeover.",
+      "remediation": "Set --anonymous-auth=false, enforce RBAC and audit logging, and restrict API access to the control network.",
+      "refs": ["https://kubernetes.io/docs/concepts/security/"]
+    },
+    "jenkins": {
+      "severity": "high",
+      "title": "Jenkins exposed",
+      "detail": "Jenkins executes arbitrary code as part of normal operation; unauthenticated script consoles and plugin vulnerabilities are common.",
+      "remediation": "Enable authentication and matrix-based authorisation, disable the CLI and script console, and keep plugins patched.",
+      "refs": ["https://www.jenkins.io/doc/book/security/"]
+    },
+    "ipmi": {
+      "severity": "high",
+      "title": "IPMI/BMC reachable",
+      "detail": "Baseboard management controllers give out-of-band console access and have a long history of authentication bypass and default credentials.",
+      "remediation": "Keep BMCs on a dedicated management network, change default credentials, and patch firmware.",
+      "refs": ["https://www.cisa.gov/news-events/alerts/2013/07/26/risks-using-intelligent-platform-management-interface-ipmi"]
+    },
+    "x11": {
+      "severity": "medium",
+      "title": "X11 display reachable",
+      "detail": "An open X display can allow keystroke capture and window access without authentication.",
+      "remediation": "Disable TCP listening in X, or tunnel X11 over SSH with X11 forwarding.",
+      "refs": []
+    },
+    "distccd": {
+      "severity": "high",
+      "title": "distccd reachable",
+      "detail": "distcc compiles supplied source remotely, which is remote code execution by design when unauthenticated.",
+      "remediation": "Bind distccd to the build network only, use --allow lists, and never expose it beyond trusted hosts.",
+      "refs": []
+    },
+    "rsync": {
+      "severity": "medium",
+      "title": "rsync daemon reachable",
+      "detail": "rsync modules configured without auth users expose directory contents and, with 'use chroot = no', writable paths.",
+      "remediation": "Set auth users and secrets file, restrict hosts allow/deny, and prefer rsync over SSH.",
+      "refs": []
+    },
+    "couchdb": {
+      "severity": "high",
+      "title": "CouchDB reachable",
+      "detail": "CouchDB's admin party mode (no admin user) allows full database control; older versions had query-server code execution.",
+      "remediation": "Create an admin user, bind to a private interface, and restrict _utils and _config from untrusted sources.",
+      "refs": []
+    },
+    "zookeeper": {
+      "severity": "medium",
+      "title": "ZooKeeper reachable",
+      "detail": "ZooKeeper has no authentication by default; znode contents often include connection strings and credentials.",
+      "remediation": "Enable SASL authentication, use ACLs on znodes, and restrict port 2181 to cluster members.",
+      "refs": []
+    },
+    "mqtt": {
+      "severity": "medium",
+      "title": "MQTT broker reachable",
+      "detail": "MQTT brokers frequently allow anonymous publish/subscribe, exposing device telemetry and allowing command injection into IoT fleets.",
+      "remediation": "Require username/password or client certificates, disable anonymous access, and use TLS on 8883.",
+      "refs": []
+    }
+  },
+  "port_fallback": {
+    "23": "telnet",
+    "21": "ftp",
+    "445": "microsoft-ds",
+    "139": "netbios-ssn",
+    "3389": "ms-wbt-server",
+    "5900": "vnc",
+    "5901": "vnc",
+    "1433": "ms-sql-s",
+    "3306": "mysql",
+    "5432": "postgresql",
+    "27017": "mongodb",
+    "6379": "redis",
+    "11211": "memcache",
+    "9200": "elasticsearch",
+    "389": "ldap",
+    "161": "snmp",
+    "69": "tftp",
+    "2049": "nfs",
+    "111": "rpcbind",
+    "2375": "docker",
+    "6443": "kubernetes",
+    "8009": "jenkins",
+    "623": "ipmi",
+    "6000": "x11",
+    "3632": "distccd",
+    "873": "rsync",
+    "5984": "couchdb",
+    "2181": "zookeeper",
+    "1883": "mqtt",
+    "8883": "mqtt"
+  }
+}

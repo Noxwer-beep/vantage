@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Vantage · new scan{% endblock %}
+
+{% block body %}
+<section class="hero">
+  <p class="eyebrow">local console</p>
+  <h1>Authorized <em>reconnaissance</em>,<br>in plain language.</h1>
+  <p class="lede">
+    Point Vantage at a range you control. It discovers hosts, fingerprints services,
+    runs nmap's vulnerability scripts, reviews web surface, inspects TLS, and hands
+    back a report that separates what it <b>confirmed</b> from what it only <b>suspects</b>.
+  </p>
+</section>
+
+<div class="cols">
+  <section class="card form-card">
+    <h2 class="card-title">New scan</h2>
+    <form method="post" action="{{ url_for('start_scan') }}" autocomplete="off">
+      <label class="field">
+        <span class="label">Target</span>
+        <input type="text" name="target" required spellcheck="false"
+               placeholder="192.168.1.0/24  ·  10.0.0.5  ·  host.lan"
+               pattern="[A-Za-z0-9\.\:\-/]+" title="IP, CIDR or hostname">
+        <span class="hint">A single IP, a CIDR range, or a hostname.</span>
+      </label>
+
+      <label class="field">
+        <span class="label">Strategy</span>
+        <select name="profile" id="strategy-select">
+          {% for name, prof in profiles.items() %}
+          <option value="{{ name }}"
+                  data-desc="{{ prof.description }}"
+                  data-est="{{ prof.estimate() }}"
+                  {% if name == 'standard' %}selected{% endif %}>{{ name }} — {{ prof.title }}</option>
+          {% endfor %}
+        </select>
+        <span class="hint" id="strategy-hint"></span>
+      </label>
+      <script>
+        (function () {
+          var sel = document.getElementById('strategy-select');
+          var hint = document.getElementById('strategy-hint');
+          var sync = function () {
+            var o = sel.options[sel.selectedIndex];
+            hint.textContent = o.dataset.desc + ' · ' + o.dataset.est;
+          };
+          sel.addEventListener('change', sync);
+          sync();
+        })();
+      </script>
+
+      <details class="advanced">
+        <summary>Scope and options</summary>
+        <label class="field">
+          <span class="label">Allowed networks <span class="opt">optional</span></span>
+          <textarea name="scope" rows="2" spellcheck="false"
+                    placeholder="10.0.0.0/24&#10;192.168.1.0/25"></textarea>
+          <span class="hint">One network per line. If set, any target outside this list is refused.</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="allow_public">
+          <span>Allow public addresses <small>(requires written permission from the owner)</small></span>
+        </label>
+      </details>
+
+      <label class="check authority">
+        <input type="checkbox" name="authorized" required>
+        <span>
+          I own this target or hold <b>written permission</b> to test it, and I accept
+          responsibility for this scan.
+        </span>
+      </label>
+
+      <button type="submit" class="btn primary">Start scan</button>
+    </form>
+  </section>
+
+  <aside class="card side">
+    <h2 class="card-title">This installation</h2>
+    <dl class="stats">
+      <div><dt>scans run</dt><dd>{{ stats.scans }}</dd></div>
+      <div><dt>findings stored</dt><dd>{{ stats.findings }}</dd></div>
+      <div><dt>last scan</dt><dd class="mono small">{{ (stats.last_scan or '—')[:16] | replace('T', ' ') }}</dd></div>
+    </dl>
+
+    {% if scans %}
+    <h2 class="card-title tight">Recent</h2>
+    <ul class="recent">
+      {% for s in scans[:6] %}
+      <li>
+        <a href="{{ url_for('scan_detail', scan_id=s.id) }}">
+          <span class="mono">{{ s.target }}</span>
+          <span class="meta">
+            <span class="sev-dot sev-{{ s.grade }}"></span>
+            {{ s.score }} · {{ s.n_findings }} findings
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p class="empty small">No scans yet.</p>
+    {% endif %}
+
+    <div class="note-mini">
+      <b>No credentials, no exploits.</b>
+      Vantage never authenticates and never runs exploitation tooling —
+      it reports reachability, version posture and known-issue signals.
+    </div>
+  </aside>
+</div>
+{% endblock %}
