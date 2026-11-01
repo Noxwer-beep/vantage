@@ -33,4 +33,4 @@ jobs:
         with:
           python-version: "3.12"
       - name: Byte-compile every module
-        run: python -m compileall -q vantage tests
+        run: python -m compileall -q src/vantage tests

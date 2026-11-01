@@ -21,6 +21,7 @@ cli = ["rich>=13"]
 vantage = "vantage.cli:main"
 
 [tool.setuptools]
+package-dir = { "" = "src" }
 packages = ["vantage", "vantage.web"]
 
 [tool.setuptools.package-data]

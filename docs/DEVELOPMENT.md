@@ -21,15 +21,16 @@ vantage/
 │   └── web/                  Flask app, templates, static
 ├── tests/                    stdlib unittest, 129 tests
 ├── docs/
-├── vantage.py                checkout launcher (no install needed)
+├── vantage                   checkout launcher — ./vantage, no install
+├── src/vantage/              the package
 └── pyproject.toml
 ```
 
 ## Running
 
 ```bash
-./vantage.py doctor
-./vantage.py scan 127.0.0.1 --authorized --profile quick
+./vantage doctor
+./vantage scan 127.0.0.1 --authorized --profile quick
 python3 -m vantage scan 127.0.0.1 --authorized      # equivalent
 ```
 

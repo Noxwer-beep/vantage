@@ -79,8 +79,8 @@ Run it straight from the checkout:
 
 ```bash
 git clone <this repo> vantage && cd vantage
-./vantage.py doctor
-./vantage.py scan 127.0.0.1 --authorized
+./vantage doctor
+./vantage scan 127.0.0.1 --authorized
 ```
 
 Or install it:
